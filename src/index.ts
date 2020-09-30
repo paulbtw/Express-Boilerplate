@@ -2,28 +2,24 @@ require("dotenv").config();
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import { sequelize } from "./helper/database";
+import { createConnection } from "typeorm";
 
 // Routes
-import userRoutes from "./routes/user";
+import router from "./routes";
+
 import { errorHandler } from "./helper/error-handler";
 
-// Middlewares
+createConnection().then((connection) => {
+  const app = express();
 
-// Models
-const { User } = require("./models");
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json());
+  app.use(cors());
 
-const app = express();
+  app.use("/", router);
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(cors());
+  app.use(errorHandler);
 
-app.use("/auth", userRoutes);
-
-app.use(errorHandler);
-
-sequelize.sync({ force: false }).then(() => {
   const port = process.env.NODE_ENV === "production" ? 80 : 5000;
   app.listen(port, () => {
     console.log(`Server listening on ${port}`);

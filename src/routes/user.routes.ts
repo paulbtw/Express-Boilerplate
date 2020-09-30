@@ -1,7 +1,5 @@
 import { Router } from "express";
 import { body } from "express-validator";
-
-import { User } from "../models";
 import {
   putSignup,
   postLogin,
@@ -14,6 +12,8 @@ import {
   deleteAccount,
 } from "../controllers/userController";
 import { isAuth } from "../middleware/isAuth";
+import { getRepository } from "typeorm";
+import { User } from "../entities/User";
 
 const router = Router();
 
@@ -22,11 +22,13 @@ router.put("/signup", [
     .isEmail()
     .withMessage("Please enter a valid EMail.")
     .custom((value, { req }) => {
-      return User.findOne({ where: { email: value } }).then((userDoc) => {
-        if (userDoc) {
-          return Promise.reject("E-Mail address already registered!");
-        }
-      });
+      return getRepository(User)
+        .findOne({ where: { email: value } })
+        .then((userDoc) => {
+          if (userDoc) {
+            return Promise.reject("E-Mail address already registered!");
+          }
+        });
     })
     .normalizeEmail(),
   body("password").trim().isLength({ min: 5 }),
